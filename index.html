@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JIT - Jobs in Time | Investor Pitch Learning Hub</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            950: '#022c22',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', "Segoe UI", 'Roboto', "Helvetica Neue", 'Arial', "Noto Sans", "TC", "PingFang TC", "Microsoft JhengHei", 'sans-serif'],
+                        serif: ['ui-serif', 'Georgia', 'Cambria', "Times New Roman", 'Times', 'serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        .delay-100 { animation-delay: 0.1s; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #475569; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Lucide Icons Component Wrapper
+        const Icon = ({ name, size = 24, className }) => {
+            const LucideIcons = window.lucide.icons;
+            const IconComponent = LucideIcons[name];
+            
+            if (!IconComponent) {
+                return null;
+            }
+
+            // Convert size to string just in case
+            const sizeStr = size.toString();
+
+            // We need to render the SVG manually because we are not using the React wrapper library directly
+            // But wait, lucide-react IS NOT available as a UMD build easily.
+            // WORKAROUND: We will use a simple mapping since we can't easily import lucide-react in browser directly without build step
+            // OR use standard SVG icons.
+            // BETTER APPROACH for standalone HTML: Create simple SVG components mapping for used icons.
+            
+            return <i data-lucide={name} className={className} width={size} height={size}></i>;
+        };
+
+        // Since we can't easily use lucide-react in standalone HTML without a bundler,
+        // we will create React components for the icons we need using raw SVG paths.
+        // This ensures stability and no external dependency failures.
+        
+        const Icons = {
+            LayoutDashboard: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>,
+            AlertCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>,
+            CheckCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            CheckCircle2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>,
+            Box: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></svg>,
+            Shield: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+            ShieldCheck: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>,
+            Globe: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            Map: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>,
+            Rocket: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>,
+            BarChart: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>,
+            TrendingUp: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
+            DollarSign: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+            Hand: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>,
+            Target: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+            Users: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+            ClipboardList: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>,
+            BookOpen: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+            Lightbulb: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>,
+            Briefcase: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>,
+            Menu: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>,
+            X: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+            ChevronRight: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m9 18 6-6-6-6"/></svg>,
+            Moon: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>,
+            Sun: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>,
+            Languages: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>,
+            ArrowRight: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>,
+            GraduationCap: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>,
+            Clock: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            User: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            Award: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>,
+            Youtube: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>,
+            ExternalLink: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>,
+            RefreshCw: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>,
+            Info: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        };
+
+        const { useState, useEffect } = React;
+
+        // --- Links ---
+        const PROF_LINK = "https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo";
+        const YT_LINK = "https://youtube.com/@shihminlo6097?si=6__-sUMfPTHbwKkg";
+
+        // --- Helper Functions ---
+        const shuffleArray = (array) => {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        };
+
+        // --- Quiz Data with Explanations ---
+        const generateQuizData = (lang) => {
+            const isEn = lang === 'en';
+            return {
+                executive_summary: [
+                    {
+                        q: isEn ? "What is the core differentiation of JIT?" : "JIT 與競品最大的差異化優勢是什麼？",
+                        options: isEn ? ["Lower Price", "Compliance & Localization", "Global Reach"] : ["價格更低", "合規性與在地化 (Compliance & Localization)", "全球市場"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! JIT focuses on 'Human-in-the-loop' compliance and localized Chinese semantics, unlike generic spam bots." : "正確！JIT 專注於解決「合規性 (Human-in-the-loop)」與「在地化中文語意」，這正是目前市場上通用 AI 工具所缺乏的。"
+                    },
+                    {
+                        q: isEn ? "What is the funding goal for the Pre-Seed round?" : "Pre-Seed 輪的募資目標金額是多少？",
+                        options: isEn ? ["US$ 150K", "US$ 500K", "US$ 1M"] : ["US$ 150K", "US$ 500K", "US$ 1M"],
+                        ans: 0,
+                        explanation: isEn ? "Correct! The goal is US$ 150K to support 15-18 months of operations." : "正確！目標為 15 萬美元，用於支持 15-18 個月的營運跑道，以達成 A 輪前驗證。"
+                    },
+                    {
+                        q: isEn ? "Who acts as the 'Human-in-the-loop'?" : "誰擔任「人機協作」中的最終確認者？",
+                        options: isEn ? ["The Developer", "The User", "The AI"] : ["開發者", "使用者 (The User)", "AI 系統"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! The user must click to submit, ensuring TOS compliance." : "正確！必須由使用者親自點擊確認投遞，這不僅符合平台規範 (TOS)，也讓使用者對申請負責。"
+                    }
+                ],
+                pain_points: [
+                    {
+                        q: isEn ? "What is 'Application Fatigue'?" : "什麼是「申請疲勞 (Application Fatigue)」？",
+                        options: isEn ? ["Too many interviews", "Spending >3hrs per app with <5% reply", "Writing code"] : ["面試太多", "每份申請花 >3小時但回覆率 <5%", "寫程式太累"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! Low efficiency causes burnout." : "正確！高投入時間（>3小時）卻換來低回報（<5%），導致求職者身心俱疲。"
+                    },
+                    {
+                        q: isEn ? "Why do employers face 'Noise over Signal'?" : "為什麼雇主會面臨「雜訊大於訊號」的問題？",
+                        options: isEn ? ["Not enough applicants", "AI Spam Tools", "Manual hiring"] : ["應徵者太少", "AI 自動投遞工具濫用", "人工招聘"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! Auto-apply bots flood HR with irrelevant resumes." : "正確！市面上的 AI 自動投遞工具製造了大量未經篩選的垃圾履歷，淹沒了真正的人才。"
+                    }
+                ],
+                solution: [
+                    {
+                        q: isEn ? "What system does JIT optimize?" : "JIT 主要針對什麼系統進行優化？",
+                        options: isEn ? ["ERP", "ATS (Applicant Tracking System)", "CRM"] : ["ERP", "ATS (應徵者追蹤系統)", "CRM"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! ATS filters resumes based on keywords." : "正確！ATS (應徵者追蹤系統) 是企業篩選履歷的第一道關卡，JIT 針對此進行關鍵字優化。"
+                    },
+                    {
+                        q: isEn ? "Why is 'Human-in-the-loop' important?" : "為什麼「人機協作」很重要？",
+                        options: isEn ? ["It's cheaper", "It avoids TOS bans", "It's faster"] : ["比較便宜", "避免違反 TOS 被封號", "比較快"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! Fully automated bots are often banned by job boards." : "正確！全自動機器人違反大多數求職網的服務條款 (TOS)，JIT 的模式能確保帳號安全。"
+                    }
+                ],
+                product: [
+                    {
+                        q: isEn ? "What is the purpose of the 'Gap Report'?" : "「落差報告 (Gap Report)」的目的是什麼？",
+                        options: isEn ? ["To criticize users", "To guide learning", "To format resumes"] : ["批評使用者", "引導學習與補強 (Guide Learning)", "排版履歷"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! It identifies missing skills to recommend courses." : "正確！它能識別技能缺口，進而推薦課程，將產品延伸至教育培訓。"
+                    },
+                    {
+                        q: isEn ? "How does the Interview Coach help?" : "面試教練如何提供協助？",
+                        options: isEn ? ["Writes code for you", "Provides STAR method practice", "Applies for you"] : ["幫你寫程式", "提供 STAR 法則模擬練習", "幫你投遞"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! STAR is the standard method for behavioral questions." : "正確！STAR (情境/任務/行動/結果) 是回答行為面試問題的黃金法則。"
+                    }
+                ],
+                moat: [
+                    {
+                        q: isEn ? "What data does JIT have that Job Boards don't?" : "JIT 擁有什麼求職網 (104) 沒有的數據？",
+                        options: isEn ? ["Job Openings", "User Gap Data (Skill Shortfalls)", "Company Address"] : ["職缺列表", "用戶技能落差數據 (Gap Data)", "公司地址"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! Job boards know what companies want; JIT knows what students lack." : "正確！求職網只有職缺數據，JIT 累積的是「求職者還缺什麼」的數據，這是教育變現的基礎。"
+                    },
+                    {
+                        q: isEn ? "Which partner channel lowers CAC?" : "哪一個合作夥伴渠道能降低獲客成本 (CAC)？",
+                        options: isEn ? ["Google Ads", "Universities", "TV Ads"] : ["Google 廣告", "大學院校 (Universities)", "電視廣告"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! Partnering with schools provides a steady stream of users." : "正確！直接與學校合作能批量導入學生，大幅降低個別行銷的成本。"
+                    }
+                ],
+                market: [
+                    {
+                        q: isEn ? "What is JIT's role positioning?" : "JIT 的角色定位是什麼？",
+                        options: isEn ? ["Ad Platform", "Talent Agent", "Spam Bot"] : ["廣告平台", "人才經紀人 (Talent Agent)", "垃圾機器人"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! JIT works for the talent, optimizing their success." : "正確！JIT 不只是刊登職缺，而是主動協助人才提升錄取率，如同經紀人一般。"
+                    },
+                    {
+                        q: isEn ? "What is the Beachhead market?" : "首選的灘頭堡市場是？",
+                        options: isEn ? ["US Tech Workers", "Taiwan Graduates (Retail/Mfg)", "Japan Finance"] : ["美國科技業", "台灣畢業生 (零售/製造)", "日本金融業"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! 250k annual graduates in Taiwan." : "正確！每年 25 萬名台灣畢業生，特別鎖定零售與製造業職缺。"
+                    }
+                ],
+                roadmap: [
+                    {
+                        q: isEn ? "When will the MVP launch?" : "MVP 預計何時上線？",
+                        options: isEn ? ["Q1 2026", "Q4 2026", "2027"] : ["Q1 2026", "Q4 2026", "2027"],
+                        ans: 0,
+                        explanation: isEn ? "Correct! Early 2026." : "正確！預計在 2026 第一季推出最小可行性產品。"
+                    },
+                    {
+                        q: isEn ? "What happens in Q2 2026?" : "Q2 2026 的主要里程碑是？",
+                        options: isEn ? ["IPO", "Campus & MSME Pilot", "Global Scale"] : ["上市", "校園與企業試點 (Pilot)", "全球擴張"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! Testing with 3 universities and 30 companies." : "正確！將進行 3 所大學與 30 家中小企業的實地驗證。"
+                    }
+                ],
+                metrics: [
+                    {
+                        q: isEn ? "Target Interview Rate Lift?" : "目標提升多少面試轉換率？",
+                        options: isEn ? ["+5%", "+10%", "+25%"] : ["+5%", "+10%", "+25%"],
+                        ans: 2,
+                        explanation: isEn ? "Correct! A significant efficiency boost." : "正確！基於 POC 結果，我們目標提升 25% 的面試機會。"
+                    },
+                    {
+                        q: isEn ? "Target Retention Rate?" : "目標留存率是多少？",
+                        options: isEn ? ["> 60%", "< 20%", "0%"] : ["> 60%", "< 20%", "0%"],
+                        ans: 0,
+                        explanation: isEn ? "Correct! Creating stickiness via learning features." : "正確！透過職涯追蹤與學習功能，維持 >60% 的高留存率。"
+                    }
+                ],
+                revenue: [
+                    {
+                        q: isEn ? "What is the LTV/CAC target?" : "LTV/CAC (效益成本比) 目標是？",
+                        options: isEn ? ["> 4X", "1X", "< 0.5X"] : ["> 4X", "1X", "< 0.5X"],
+                        ans: 0,
+                        explanation: isEn ? "Correct! High efficiency due to campus channels." : "正確！利用低成本的校園獲客渠道，創造 4 倍以上的投資效益。"
+                    },
+                    {
+                        q: isEn ? "Phase 3 creates revenue from?" : "第三階段的營收來自？",
+                        options: isEn ? ["Job Ads", "Education Affiliate", "Selling Data"] : ["職缺廣告", "教育分潤 (Education Affiliate)", "販賣數據"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! Commission from recommended courses." : "正確！推薦課程給有技能落差的用戶，賺取分潤佣金。"
+                    }
+                ],
+                ask: [
+                    {
+                        q: isEn ? "How much funding is needed?" : "需要募資多少金額？",
+                        options: isEn ? ["US$ 150K", "US$ 1M", "US$ 10K"] : ["US$ 150K", "US$ 1M", "US$ 10K"],
+                        ans: 0,
+                        explanation: isEn ? "Correct! A capital efficient seed round." : "正確！US$ 150K 足以支撐團隊運作至 A 輪驗證。"
+                    },
+                    {
+                        q: isEn ? "What is the biggest expense?" : "最大筆的支出項目是？",
+                        options: isEn ? ["Office Rent", "AI Model & Data", "Parties"] : ["辦公室租金", "AI 模型與數據", "派對"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! 40% goes to tech development." : "正確！40% 資金將用於微調 AI 模型與建立數據管道。"
+                    }
+                ],
+                team: [
+                    {
+                        q: isEn ? "What is the CEO's background?" : "CEO 的背景是？",
+                        options: isEn ? ["Professor", "Student", "Artist"] : ["教授 (Professor)", "學生", "藝術家"],
+                        ans: 0,
+                        explanation: isEn ? "Correct! Prof. Lo bridges academia and industry." : "正確！駱世民教授擁有豐富的學術與產學合作經驗。"
+                    },
+                    {
+                        q: isEn ? "Who handles AI Architecture?" : "誰負責 AI 架構？",
+                        options: isEn ? ["Ben Wang", "Alex Yang", "The Advisor"] : ["Ben Wang", "Alex Yang", "顧問"],
+                        ans: 1,
+                        explanation: isEn ? "Correct! Alex Yang is the CTO." : "正確！Alex Yang 專精於 NLP 與 RAG 架構。"
+                    }
+                ]
+            };
+        };
+
+        // --- Content Data with Intros ---
+        const contentData = {
+            en: {
+                sections: [
+                    { id: 'executive_summary', title: '0. Executive Summary', icon: 'LayoutDashboard' },
+                    { id: 'pain_points', title: 'I. Pain Points', icon: 'AlertCircle' },
+                    { id: 'solution', title: 'II. Solution', icon: 'CheckCircle' },
+                    { id: 'product', title: 'III. Product', icon: 'Box' },
+                    { id: 'moat', title: 'IV. Moat', icon: 'Shield' },
+                    { id: 'market', title: 'V. Market', icon: 'Globe' },
+                    { id: 'roadmap', title: 'VI. Roadmap', icon: 'Map' },
+                    { id: 'metrics', title: 'VII. Metrics', icon: 'BarChart' },
+                    { id: 'revenue', title: 'VIII. Revenue', icon: 'DollarSign' },
+                    { id: 'ask', title: 'IX. Ask', icon: 'Hand' },
+                    { id: 'team', title: 'X. Team', icon: 'Users' },
+                    { id: 'user_record', title: 'XI. User Record', icon: 'ClipboardList' },
+                ],
+                content: {
+                    executive_summary: {
+                        title: "Executive Summary",
+                        subtitle: "The 1-Page Pitch Overview",
+                        intro: "This Executive Summary provides a high-level overview of the entire business plan. It encapsulates the core problem, our innovative solution, the market opportunity, and our funding requirements. Think of this as the 'Elevator Pitch'—if you had only 2 minutes to convince an investor, this is the blueprint.",
+                        highlights: [
+                            "Vision: The first 'Human-in-the-loop' & 'Localized' AI Career Agent in Taiwan.",
+                            "Problem: Application Fatigue (>3hrs/app) & Resume Spam (<5% success).",
+                            "Solution: Bilingual ATS Optimization + User-Confirmed Auto-Apply.",
+                            "The Ask: US$ 150K Pre-Seed for 15-18 months runway to reach Series A validation."
+                        ],
+                        glossary: [
+                            { term: "Pitch Deck", def: "A brief presentation used to provide investors with a quick overview of your business plan." },
+                            { term: "Executive Summary", def: "A short document or section of a document that summarizes a longer report or proposal." },
+                            { term: "Value Prop", def: "Value Proposition. An innovation, service, or feature intended to make a company or product attractive to customers." }
+                        ],
+                        knowledge: "A strong Executive Summary is crucial because investors often read it first to decide if the rest of the deck is worth their time. It must be concise, compelling, and data-driven.",
+                        cards: [
+                            { q: "What is JIT?", a: "AI Career Agent" },
+                            { q: "Core Advantage?", a: "Compliance & Localization" },
+                            { q: "Funding Goal?", a: "US$ 150K" }
+                        ]
+                    },
+                    pain_points: {
+                        title: "I. Pain Points",
+                        subtitle: "Inefficiency in the current job market creates waste on both sides.",
+                        intro: "The job market is broken. On one side, students face 'Application Fatigue,' spending hours tailoring resumes with little success. On the other, employers deal with 'Noise over Signal,' flooded by low-quality, AI-generated spam resumes. This section quantifies the inefficiency that necessitates our solution.",
+                        highlights: [
+                            "Talent Side: 'Application Fatigue'. Students spend >3 hours per application but receive <5% response rate.",
+                            "Employer Side: 'Noise over Signal'. AI spam tools flood HR with low-quality resumes, increasing screening costs by 3x.",
+                            "Core Issue: Fragmented data and poor Resume-JD alignment lead to a lose-lose situation."
+                        ],
+                        glossary: [
+                            { term: "Pain Point", def: "A specific problem that prospective customers of your business are experiencing." },
+                            { term: "Application Fatigue", def: "Burnout experienced by job seekers due to repetitive, low-success application processes." },
+                            { term: "Noise over Signal", def: "A situation where irrelevant information (spam resumes) drowns out useful information (qualified candidates)." }
+                        ],
+                        knowledge: "The rise of 'Easy Apply' and generic AI bots has paradoxically made hiring harder. While quantity increases, quality decreases. JIT addresses this by focusing on 'precision' rather than 'volume'.",
+                        cards: [
+                            { q: "Avg. time spent per app?", a: "> 3 Hours" },
+                            { q: "Avg. success rate?", a: "< 5%" },
+                            { q: "Employer's main issue?", a: "Resume Spam & Long Cycles" }
+                        ]
+                    },
+                    solution: {
+                        title: "II. Solution & Value Prop",
+                        subtitle: "The Right Job at the Right Time.",
+                        intro: "JIT solves the efficiency crisis through 'Compliance' and 'Localization'. Unlike generic bots, we use a Human-in-the-loop approach to ensure every application is high-quality and TOS-compliant. We optimize bilingual resumes to pass ATS filters, ensuring candidates get seen by recruiters.",
+                        highlights: [
+                            "Core Value: Human-in-the-loop Automation combined with Bilingual ATS Optimization.",
+                            "Process: Track -> Tailor -> Submit (Human Confirmed) -> Prep.",
+                            "Differentiation: The first TOS-compliant automation solution in Taiwan."
+                        ],
+                        glossary: [
+                            { term: "Human-in-the-loop", def: "A model requiring human interaction (user confirmation) in an automated process to ensure quality and compliance." },
+                            { term: "ATS", def: "Applicant Tracking System. Software used by recruiters to filter resumes based on keywords." },
+                            { term: "TOS Compliant", def: "Adhering to the 'Terms of Service' of job platforms to avoid bans." }
+                        ],
+                        knowledge: "Why Human-in-the-loop? Pure automation violates many platforms' TOS (Terms of Service) and is often flagged as spam. JIT's approach ensures the user takes the final action, making it a tool, not a bot.",
+                        cards: [
+                            { q: "What is JIT's core tech?", a: "Bilingual ATS + Human-in-loop" },
+                            { q: "Target Audience?", a: "Taiwan Students & MSMEs" },
+                            { q: "Key Compliance Feature?", a: "User-Confirmed One-Click Apply" }
+                        ]
+                    },
+                    product: {
+                        title: "III. Product (SaaS)",
+                        subtitle: "A comprehensive career agent platform.",
+                        intro: "Our SaaS platform is more than just a tool; it's a Career Agent. It includes Smart Matching for analysis, Document Tailoring for application, and an Interview Coach for preparation. Crucially, the 'Learning Hub' helps users bridge skill gaps, turning rejections into learning opportunities.",
+                        highlights: [
+                            "Smart Matching: AI parsing to generate Match Scores & Gap Reports.",
+                            "Tailored Docs: Auto-generated bilingual Resumes & Cover Letters.",
+                            "Interview Coach: AI mock interviews with STAR method.",
+                            "Learning Hub: Gap-to-Skill recommendations."
+                        ],
+                        glossary: [
+                            { term: "SaaS", def: "Software as a Service. A software distribution model where a cloud provider hosts applications and makes them available to end users." },
+                            { term: "MVP", def: "Minimum Viable Product. A product with just enough features to satisfy early customers." },
+                            { term: "STAR Method", def: "Situation, Task, Action, Result. A structured manner of responding to behavioral interview questions." }
+                        ],
+                        knowledge: "JIT is not just a resume generator; it's a 'Career Agent'. The 'Gap Report' is crucial as it transitions the product from a tool (short-term) to a learning platform (long-term).",
+                        cards: [
+                            { q: "Target ATS improvement?", a: "+30% Matching Rate" },
+                            { q: "Interview Prep Target?", a: "Reduce prep time by 50%" },
+                            { q: "What is Community Insights?", a: "Aggregated reviews from PTT/Dcard" }
+                        ]
+                    },
+                    moat: {
+                        title: "IV. The Moat",
+                        subtitle: "Defensible advantages against competitors.",
+                        intro: "Our moat is built on unique data and partnerships. While competitors have job data, JIT accumulates 'Gap Data'—knowing what skills users lack. Combined with exclusive university partnerships and a localized bilingual database, we create barriers to entry that are hard to replicate.",
+                        highlights: [
+                            "Localized Data: Taiwan-first bilingual vocabulary database.",
+                            "Vertical Focus: Starting with Retail/Manufacturing (OEM/ODM), then Semiconductor.",
+                            "Gap Data: Accumulating data on 'what skills users lack', which job boards (104) don't have.",
+                            "Edu Partnerships: Stable acquisition channel via universities."
+                        ],
+                        glossary: [
+                            { term: "Moat", def: "A distinct advantage a company has over its competitors that allows it to protect its market share and profitability." },
+                            { term: "KSA", def: "Knowledge, Skills, and Abilities. A series of attributes required to perform a job." },
+                            { term: "Vertical Market", def: "A market in which vendors offer goods and services specific to an industry, trade, profession, or other group of customers." }
+                        ],
+                        knowledge: "Data is the ultimate moat. While competitors have job data, JIT has 'User Gap Data'. Knowing what skills students are missing allows JIT to sell training (Phase 3 revenue), creating a unique ecosystem.",
+                        cards: [
+                            { q: "Key Data Asset?", a: "Gap Data (User Skill Shortfalls)" },
+                            { q: "Initial Industry Focus?", a: "Retail & Manufacturing (OEM/ODM)" },
+                            { q: "Acquisition Channel?", a: "University Career Centers" }
+                        ]
+                    },
+                    market: {
+                        title: "V. Market & Competition",
+                        subtitle: "Beachhead strategy and competitive landscape.",
+                        intro: "We are entering the market via a 'Beachhead Strategy', targeting the 250k annual graduates in Taiwan. We position ourselves not as an ad platform (like 104) nor a spam bot (like Global AI tools), but as a high-quality 'Talent Agent' that serves both students and MSMEs.",
+                        highlights: [
+                            "Beachhead Market: 250k annual graduates in Taiwan.",
+                            "MSME Market: ~1M companies needing efficiency tools.",
+                            "Competitors: Local Job Boards (Ad Platforms) vs. Global AI Tools (Spam Bots).",
+                            "JIT Position: The 'Talent Agent' (Quality & Compliance)."
+                        ],
+                        glossary: [
+                            { term: "Beachhead Market", def: "A small, specific market segment that you attack first to validate your product before expanding." },
+                            { term: "MSME", def: "Micro, Small and Medium Enterprises." },
+                            { term: "TAM", def: "Total Addressable Market. The overall revenue opportunity available to a product or service if 100% market share is achieved." }
+                        ],
+                        knowledge: "JIT avoids direct war with 104/Yourator. Instead, it acts as a layer 'on top' of them. For MSMEs, it serves as an 'ATS Lite', solving the problem that enterprise ATS is too expensive.",
+                        cards: [
+                            { q: "Beachhead Size?", a: "250k Graduates / Year" },
+                            { q: "JIT vs. Teal/LazyApply?", a: "JIT is Localized & Compliant" },
+                            { q: "JIT vs. 104?", a: "Agent vs. Ad Platform" }
+                        ]
+                    },
+                    roadmap: {
+                        title: "VI. Roadmap",
+                        subtitle: "Timeline to scale: From 100 to 3,000 pairs.",
+                        intro: "Our roadmap is milestone-driven, focusing on validating usage before scaling. We start with an MVP in Q1 2026, move to campus pilots in Q2, and introduce advanced coaching features in Q3. By Q4, we aim for API integration and scale.",
+                        highlights: [
+                            "Q1 2026: MVP Launch (Tracking + Tailoring). Target: 100 resumes.",
+                            "Q2 2026: Pilot with 3 Universities + 30 MSMEs.",
+                            "Q3 2026: Launch Interview Coach & Learning Hub. Target: 1k resumes.",
+                            "Q4 2026: Scale via Incubators & API integrations. Target: 3k resumes."
+                        ],
+                        glossary: [
+                            { term: "POC", def: "Proof of Concept. Evidence, typically derived from an experiment or pilot project, which demonstrates that a design concept is feasible." },
+                            { term: "API", def: "Application Programming Interface. Allows two applications to talk to each other." },
+                            { term: "Incubator", def: "An organization that helps new and startup companies to develop by providing services such as management training or office space." }
+                        ],
+                        knowledge: "The roadmap is structured by 'Resumes Processed' (Validation) rather than just time. This shows a focus on usage metrics. The transition from B2C (Students) to B2B (MSME) happens in Q2.",
+                        cards: [
+                            { q: "MVP Launch Date?", a: "Q1 2026" },
+                            { q: "Q3 2026 Milestone?", a: "Interview Coach & Learning Hub" },
+                            { q: "Q4 2026 Target?", a: "3,000 Resume-JD Pairs" }
+                        ]
+                    },
+                    metrics: {
+                        title: "VII. Key Metrics",
+                        subtitle: "Targets by Q3 2026.",
+                        intro: "We define success through precision and retention. Our goal is >95% parsing accuracy and >85% match precision. Most importantly, we aim for a >60% retention rate, proving that users find value in JIT beyond just a single application.",
+                        highlights: [
+                            "Resume Parsing Accuracy: > 95%",
+                            "Match Precision: ≥ 85% (vs human label)",
+                            "Interview Rate Lift: +25% vs baseline",
+                            "Retention (6-week): > 60%"
+                        ],
+                        glossary: [
+                            { term: "Precision", def: "The quality of a positive prediction made by the model. (High precision = low false positives)." },
+                            { term: "Retention Rate", def: "The percentage of users who continue to use the product over a given period." },
+                            { term: "Baseline", def: "A minimum or starting point used for comparisons." }
+                        ],
+                        knowledge: "Investors look for 'Stickiness'. A 60% retention rate for a job search tool is high (usually users leave after finding a job). JIT achieves this via 'Career Tracking' and 'Learning', keeping users even after they apply.",
+                        cards: [
+                            { q: "Parsing Accuracy Target?", a: "> 95%" },
+                            { q: "Match Precision Target?", a: "≥ 85%" },
+                            { q: "Interview Lift?", a: "+ 25%" }
+                        ]
+                    },
+                    revenue: {
+                        title: "VIII. Revenue Model",
+                        subtitle: "A phased approach to monetization.",
+                        intro: "Our revenue model evolves from B2C to B2B to Affiliate. We start with Freemium for students to build a user base (Phase 1), then sell efficiency tools to MSMEs (Phase 2), and finally monetize education recommendations via commissions (Phase 3).",
+                        highlights: [
+                            "Phase 1 (Students): Freemium + Tailoring Pack (NT$49-199/mo). High LTV/CAC > 4X.",
+                            "Phase 2 (MSME): Recruitment Subscription (NT$1-3k/mo). TAM NT$1B/mo.",
+                            "Phase 3 (Affiliate): Commission from courses based on 'Gap-to-Skill' data."
+                        ],
+                        glossary: [
+                            { term: "Freemium", def: "A business model where basic services are provided free of charge while more advanced features must be paid for." },
+                            { term: "LTV", def: "Lifetime Value. The total revenue a business can reasonably expect from a single customer account." },
+                            { term: "CAC", def: "Customer Acquisition Cost. The cost of winning a customer to purchase a product/service." }
+                        ],
+                        knowledge: "The 'Flywheel' effect: More students -> More data -> Better Matching -> More Employers -> More Students. Phase 3 (Education Affiliate) is pure profit (high margin) with zero inventory.",
+                        cards: [
+                            { q: "Student Pricing?", a: "NT$ 49-199 / month" },
+                            { q: "MSME Pricing?", a: "NT$ 1,000-3,000 / month" },
+                            { q: "Unit Economics?", a: "LTV/CAC > 4X" }
+                        ]
+                    },
+                    ask: {
+                        title: "IX. The Ask",
+                        subtitle: "Funding Request & Allocation.",
+                        intro: "We are raising US$ 150K to fuel 15-18 months of operations. The majority of funds (40%) will go into AI Model fine-tuning and Data pipeline construction, which is the core of our product. This capital will take us to Series A readiness.",
+                        highlights: [
+                            "Round: Pre-Seed / Seed.",
+                            "Amount: US$ 150K (Cap $300K).",
+                            "Runway: 15-18 Months.",
+                            "Allocation: 40% AI/Data, 35% Product, 15% GTM, 10% Legal."
+                        ],
+                        glossary: [
+                            { term: "Runway", def: "The amount of time a startup can operate before it runs out of money." },
+                            { term: "Pre-Seed", def: "The earliest stage of funding, often used to build the MVP." },
+                            { term: "Burn Rate", def: "The rate at which a new company uses up its venture capital to finance overhead before generating positive cash flow." }
+                        ],
+                        knowledge: "The ask is 'Capital Efficient'. By using university resources, the burn rate is kept low (~$10-15k/mo). The goal is to reach 'Series A Pilot Validation' (Revenue proof) with this funding.",
+                        cards: [
+                            { q: "Funding Amount?", a: "US$ 150K" },
+                            { q: "Runway Length?", a: "15-18 Months" },
+                            { q: "Top Spend?", a: "40% AI Model & Data" }
+                        ]
+                    },
+                    team: {
+                        title: "X. The Team",
+                        subtitle: "Cross-disciplinary Education & AI experts.",
+                        intro: "Our team combines academic credibility with technical expertise. Prof. Shihmin Lo brings deep industry connections and channel access. Alex Yang leads our AI architecture. Together with our advisors, we have the right mix to execute this vision.",
+                        highlights: [
+                            "CEO: Prof. Shihmin Lo - Academic/Industry bridge, Vision.",
+                            "CTO: Alex Yang - AI Architect, NLP/RAG expert.",
+                            "CMO: Ben Wang - Growth, Campus & B2B partnerships.",
+                            "Advisors: HR Tech & Legal Compliance experts."
+                        ],
+                        glossary: [
+                            { term: "Co-founder", def: "A person who, in conjunction with others, is instrumental in starting a business." },
+                            { term: "NLP", def: "Natural Language Processing. A branch of AI helping computers understand human language." },
+                            { term: "RAG", def: "Retrieval-Augmented Generation. Optimizing LLM output by referencing an authoritative knowledge base." }
+                        ],
+                        knowledge: "The team mix is ideal: A Professor (Trust/Channel), a Tech Lead (Product), and a Marketer (Growth). The 'Professor' element is key for the 'Education Partnerships' moat.",
+                        cards: [
+                            { q: "Who is the CEO?", a: "Prof. Shihmin Lo" },
+                            { q: "CTO's Expertise?", a: "NLP & RAG Architecture" },
+                            { q: "CEO's unique advantage?", a: "Academic & Campus Access" }
+                        ]
+                    },
+                    user_record: {
+                        title: "XI. User Record",
+                        subtitle: "Your Progress & Performance",
+                        intro: "Review your learning journey. This dashboard tracks your quiz scores across all sections, helping you identify areas for review.",
+                        highlights: [],
+                        glossary: [],
+                        knowledge: "Continuous learning is key. Use this record to spot weak points and revisit the material.",
+                        cards: []
+                    }
+                }
+            },
+            zh: {
+                sections: [
+                    { id: 'executive_summary', title: '0. 重點摘要 (戰情室)', icon: 'LayoutDashboard' },
+                    { id: 'pain_points', title: 'I. 痛點分析', icon: 'AlertCircle' },
+                    { id: 'solution', title: 'II. 解決方案', icon: 'CheckCircle' },
+                    { id: 'product', title: 'III. 產品特色', icon: 'Box' },
+                    { id: 'moat', title: 'IV. 競爭護城河', icon: 'Shield' },
+                    { id: 'market', title: 'V. 市場競品', icon: 'Globe' },
+                    { id: 'roadmap', title: 'VI. 發展藍圖', icon: 'Map' },
+                    { id: 'metrics', title: 'VII. 關鍵指標', icon: 'BarChart' },
+                    { id: 'revenue', title: 'VIII. 營收模式', icon: 'DollarSign' },
+                    { id: 'ask', title: 'IX. 投資需求', icon: 'Hand' },
+                    { id: 'team', title: 'X. 核心團隊', icon: 'Users' },
+                    { id: 'user_record', title: 'XI. 學習歷程紀錄', icon: 'ClipboardList' },
+                ],
+                content: {
+                    executive_summary: {
+                        title: "創業計畫重點摘要",
+                        subtitle: "1-Page Pitch Overview",
+                        intro: "本頁面為整個創業計畫的「戰情室」。它濃縮了市場痛點、解決方案、商業價值與資金需求。這就是所謂的「電梯簡報 (Elevator Pitch)」——如果您只有兩分鐘向投資人提案，這裡就是您必須傳達的核心內容。",
+                        highlights: [
+                            "願景: 台灣首個兼具「人機協作 (Human-in-the-loop)」與「在地化 (Localized)」的 AI 職涯經紀人。",
+                            "問題: 求職申請疲勞 (>3小時/份) 與 垃圾履歷氾濫 (<5% 回覆)。",
+                            "解方: 雙語 ATS 最佳化 + 使用者確認式的一鍵投遞。",
+                            "需求: US$ 150K Pre-Seed 資金，用於 15-18 個月的營運，以達成 A 輪前驗證。"
+                        ],
+                        glossary: [
+                            { term: "Pitch Deck", def: "募資簡報。創業者向投資人展示商業計畫的簡短簡報。" },
+                            { term: "Executive Summary", def: "執行摘要。商業計畫書最前面的重點濃縮，通常也是投資人唯一會仔細看的部分。" },
+                            { term: "Value Prop", def: "價值主張。產品或服務為客戶創造的核心價值與吸引力。" }
+                        ],
+                        knowledge: "一個強而有力的執行摘要至關重要，因為它往往決定了投資人是否有興趣繼續閱讀後續內容。關鍵在於精簡、有說服力，並以數據為佐證。",
+                        cards: [
+                            { q: "JIT 是什麼？", a: "AI 職涯經紀人" },
+                            { q: "核心優勢？", a: "合規性 & 在地化" },
+                            { q: "募資目標？", a: "US$ 150K" }
+                        ]
+                    },
+                    pain_points: {
+                        title: "I. 痛點分析 (Pain Points)",
+                        subtitle: "當前就業市場的效率低落，導致了雙方的資源浪費。",
+                        intro: "就業市場正面臨嚴重的效率斷層。學生端面臨「申請疲勞」，花費大量時間卻回報甚微；雇主端則被「雜訊」淹沒，AI 工具製造的垃圾履歷讓篩選成本倍增。本章節將量化這些問題，證明市場對新解決方案的迫切需求。",
+                        highlights: [
+                            "人才端 (Talent):「申請疲勞」。學生平均花 >3 小時投遞一份職缺，但回覆率 <5%。",
+                            "雇主端 (Employer):「雜訊淹沒訊號」。AI 工具濫用導致垃圾履歷激增，HR 篩選成本上升 3 倍。",
+                            "核心問題: 資訊碎片化與履歷-職缺 (JD) 對齊度差，造成雙輸局面。"
+                        ],
+                        glossary: [
+                            { term: "Pain Point (痛點)", def: "潛在客戶目前面臨的具體問題或困擾。" },
+                            { term: "Application Fatigue (申請疲勞)", def: "求職者因重複、低成功率的申請過程而感到的倦怠。" },
+                            { term: "Noise over Signal (雜訊大於訊號)", def: "無效資訊（垃圾履歷）淹沒了有效資訊（合格候選人）的情況。" }
+                        ],
+                        knowledge: "「一鍵應徵」與通用 AI 機器人的興起，矛盾地讓招聘變得更難。雖然投遞數量增加，但品質卻下降。JIT 的切入點在於重塑「精準度」而非追求「數量」。",
+                        cards: [
+                            { q: "平均投遞一份履歷耗時？", a: "> 3 小時" },
+                            { q: "平均投遞成功率？", a: "< 5%" },
+                            { q: "雇主面臨的主要問題？", a: "垃圾履歷與冗長流程" }
+                        ]
+                    },
+                    solution: {
+                        title: "II. 解決方案與價值主張",
+                        subtitle: "The Right Job at the Right Time.",
+                        intro: "JIT 透過「合規」與「在地化」解決效率危機。我們不使用易被封鎖的機器人，而是採用「人機協作」模式，確保每一次投遞都合乎規範。同時，我們針對台灣市場進行雙語 ATS 優化，確保人才的履歷能真正被看見。",
+                        highlights: [
+                            "核心價值: 「人工監督自動化 (Human-in-the-loop)」結合「雙語 ATS 最佳化」。",
+                            "流程: 追蹤 (Track) -> 客製 (Tailor) -> 合規投遞 (Submit) -> 準備 (Prep)。",
+                            "差異化: 台灣首個符合服務條款 (TOS-compliant) 的自動化解決方案。"
+                        ],
+                        glossary: [
+                            { term: "Human-in-the-loop (人機協作)", def: "在自動化流程中保留人工互動（如用戶確認），以確保品質與合規性。" },
+                            { term: "ATS", def: "應徵者追蹤系統。招聘人員用來根據關鍵字篩選履歷的軟體。" },
+                            { term: "TOS Compliant", def: "遵守職缺平台的「服務條款」，避免帳號被封鎖。" }
+                        ],
+                        knowledge: "為什麼需要 Human-in-the-loop？純自動化違反許多平台的 TOS，常被視為惡意程式。JIT 確保最後一步由用戶執行，這使其定位為「工具」而非「機器人」，既合規又保留效率。",
+                        cards: [
+                            { q: "JIT 的核心技術是？", a: "雙語 ATS + 人工監督" },
+                            { q: "目標受眾？", a: "台灣學生與中小微企業 (MSME)" },
+                            { q: "關鍵的合規功能？", a: "使用者一鍵確認投遞" }
+                        ]
+                    },
+                    product: {
+                        title: "III. 產品特色 (SaaS)",
+                        subtitle: "全方位的 AI 職涯經紀人平台。",
+                        intro: "我們的 SaaS 平台不僅僅是工具，而是一位「職涯經紀人」。它包含用於分析的「智慧配對」、用於申請的「文件客製」、以及用於準備的「面試教練」。最重要的是，「學習中心」能幫助用戶補足技能缺口，將求職挫折轉化為成長動力。",
+                        highlights: [
+                            "智慧配對 (Smart Matching): AI 解析生成匹配分數與落差報告 (Gap Report)。",
+                            "文件客製 (Tailored Docs): 自動生成中英雙語履歷與 Cover Letter。",
+                            "面試教練 (Interview Coach): 提供 STAR 法則範例與 AI 模擬面試。",
+                            "學習中心 (Learning Hub): 基於職能缺口的課程推薦。"
+                        ],
+                        glossary: [
+                            { term: "SaaS", def: "軟體即服務。一種透過雲端提供軟體服務的模式。" },
+                            { term: "MVP", def: "最小可行性產品。具備滿足早期客戶所需最少功能的產品版本。" },
+                            { term: "STAR Method", def: "情境 (Situation)、任務 (Task)、行動 (Action)、結果 (Result)。一種結構化的行為面試回答技巧。" }
+                        ],
+                        knowledge: "JIT 不僅是履歷生成器，更是「職涯經紀人」。其中的「落差報告 (Gap Report)」至關重要，它將產品從短期的「工具」轉化為長期的「學習平台」。",
+                        cards: [
+                            { q: "ATS 匹配率提升目標？", a: "+30%" },
+                            { q: "面試準備時間減少目標？", a: "減少 50%" },
+                            { q: "社群情報功能是？", a: "匯整 PTT/Dcard 的口碑" }
+                        ]
+                    },
+                    moat: {
+                        title: "IV. 競爭護城河 (The Moat)",
+                        subtitle: "防禦競爭對手的獨特優勢。",
+                        intro: "我們的護城河建立在獨特的數據與夥伴關係上。當競爭對手只有「職缺數據」時，JIT 累積的是「落差數據 (Gap Data)」——我們知道用戶缺什麼。結合獨家的大學合作夥伴與在地化雙語詞庫，我們建立了難以複製的進入門檻。",
+                        highlights: [
+                            "在地化數據: 台灣首創的中英雙語職能語彙庫。",
+                            "垂直領域深耕: 鎖定零售服務與製造 (OEM/ODM)，後續擴展至半導體。",
+                            "Gap Data (落差數據): 累積「使用者缺乏什麼技能」的數據，這是 104 沒有的。",
+                            "教育夥伴: 透過大學端建立穩定的獲客管道。"
+                        ],
+                        glossary: [
+                            { term: "Moat (護城河)", def: "企業擁有的獨特優勢，能防止競爭對手搶佔市場份額。" },
+                            { term: "KSA", def: "知識 (Knowledge)、技能 (Skills) 與能力 (Abilities)。執行工作所需的屬性。" },
+                            { term: "Vertical Market (垂直市場)", def: "針對特定產業或客戶群體提供專門產品的市場。" }
+                        ],
+                        knowledge: "數據是終極的護城河。競爭對手擁有「職缺數據」，但 JIT 擁有「用戶技能落差數據」。知道學生缺什麼，讓 JIT 能銷售課程（Phase 3 營收），建立獨特生態系。",
+                        cards: [
+                            { q: "關鍵的數據資產？", a: "Gap Data (技能落差數據)" },
+                            { q: "初期鎖定產業？", a: "零售與製造業 (OEM/ODM)" },
+                            { q: "獲客管道優勢？", a: "大學職涯中心合作" }
+                        ]
+                    },
+                    market: {
+                        title: "V. 市場與競品分析",
+                        subtitle: "灘頭堡策略與競爭版圖。",
+                        intro: "我們採用「灘頭堡策略」進入市場，首選台灣每年 25 萬名畢業生。我們的定位既不是像 104 的「廣告平台」，也不是像海外 AI 工具的「海投機器人」，而是強調品質與合規的「人才經紀人」，服務學生與中小微企業。",
+                        highlights: [
+                            "灘頭堡市場 (Beachhead): 台灣每年 25 萬名畢業生。",
+                            "MSME 市場: 約 100 萬家中小微企業需要效率工具。",
+                            "競品對比: 本地求職網 (廣告平台) vs. 全球 AI 工具 (海投機器人)。",
+                            "JIT 定位: 「人才經紀人 (Talent Agent)」，強調品質與合規。"
+                        ],
+                        glossary: [
+                            { term: "Beachhead Market (灘頭堡市場)", def: "企業為驗證產品並獲得立足點而首先進攻的小型特定市場。" },
+                            { term: "MSME", def: "微型、小型與中型企業。" },
+                            { term: "TAM", def: "總潛在市場。產品達到 100% 市佔率時的總營收機會。" }
+                        ],
+                        knowledge: "JIT 避免與 104/Yourator 正面開戰，而是作為「外掛層」存在。對於 MSME，JIT 扮演「輕量級 ATS (ATS Lite)」，解決企業級 ATS 太貴的問題。",
+                        cards: [
+                            { q: "灘頭堡市場規模？", a: "每年 25 萬畢業生" },
+                            { q: "JIT vs. 海外工具？", a: "JIT 在地化且合規" },
+                            { q: "JIT vs. 104？", a: "經紀人 vs. 廣告平台" }
+                        ]
+                    },
+                    roadmap: {
+                        title: "VI. 發展藍圖 (Roadmap)",
+                        subtitle: "規模化時程：從 100 到 3,000 配對組數。",
+                        intro: "我們的發展藍圖以「里程碑」為導向，重點在於驗證使用量而非僅是時間推移。我們計畫在 2026 Q1 推出 MVP，Q2 進行校園試點，Q3 引入進階教練功能，並在 Q4 透過 API 串接實現規模化。",
+                        highlights: [
+                            "Q1 2026: MVP 上線 (追蹤+客製)。目標：100 份履歷。",
+                            "Q2 2026: 3 所大學試點 + 30 家 MSME 客戶。",
+                            "Q3 2026: 推出的面試教練與學習中心。目標：1,000 份履歷。",
+                            "Q4 2026: 透過育成中心與 API 串接擴大規模。目標：3,000 份履歷。"
+                        ],
+                        glossary: [
+                            { term: "POC", def: "概念驗證。證明設計概念可行的實驗或試點項目。" },
+                            { term: "API", def: "應用程式介面。允許兩個應用程式相互溝通的機制。" },
+                            { term: "Incubator (育成中心)", def: "提供資源（如空間、指導）協助新創公司發展的機構。" }
+                        ],
+                        knowledge: "藍圖以「履歷配對數 (#resumes)」作為里程碑，而非單純的時間，顯示團隊重視「實際使用量」驗證。B2C（學生）轉向 B2B（企業）的關鍵點在 Q2。",
+                        cards: [
+                            { q: "MVP 上線時間？", a: "Q1 2026" },
+                            { q: "Q3 2026 里程碑？", a: "面試教練與學習中心" },
+                            { q: "Q4 2026 目標？", a: "3,000 份履歷配對" }
+                        ]
+                    },
+                    metrics: {
+                        title: "VII. 關鍵指標",
+                        subtitle: "2026 Q3 的目標數據。",
+                        intro: "我們透過「精準度」與「留存率」定義成功。我們的目標是達到 >95% 的解析正確率與 >85% 的匹配精準度。最重要的是，我們追求 >60% 的留存率，證明用戶在單次申請之外，仍能從 JIT 獲得持續價值。",
+                        highlights: [
+                            "履歷解析正確率: > 95%",
+                            "匹配準確率 (Precision): ≥ 85% (對比人工標註)",
+                            "面試轉換率提升: +25% (對比基準值)",
+                            "留存率 (6週): > 60%"
+                        ],
+                        glossary: [
+                            { term: "Precision (準確率)", def: "模型預測為正樣本中，實際為正樣本的比例（高準確率=低誤報）。" },
+                            { term: "Retention Rate (留存率)", def: "在特定期間內繼續使用產品的用戶百分比。" },
+                            { term: "Baseline (基準值)", def: "用於比較的起始點或最低標準。" }
+                        ],
+                        knowledge: "投資人看重「黏著度」。求職工具通常用完即丟，但 JIT 設定 60% 的高留存率，依靠的是「職涯追蹤」與「學習功能」，在投遞後持續留住用戶。",
+                        cards: [
+                            { q: "解析正確率目標？", a: "> 95%" },
+                            { q: "匹配準確率目標？", a: "≥ 85%" },
+                            { q: "面試率提升？", a: "+ 25%" }
+                        ]
+                    },
+                    revenue: {
+                        title: "VIII. 營收模式",
+                        subtitle: "階段式的變現策略。",
+                        intro: "我們的營收模式從 B2C 演進至 B2B，最後是 Affiliate 分潤。第一階段透過學生免費增值模式建立用戶基礎，第二階段向中小企業銷售效率工具，第三階段則透過課程推薦佣金實現長尾獲利。",
+                        highlights: [
+                            "Phase 1 (學生): 免費增值 (Freemium) + 客製化包 (NT$49-199/月)。LTV/CAC > 4X。",
+                            "Phase 2 (企業): 招聘訂閱 (NT$1-3k/月)。TAM 達 NT$10億/月。",
+                            "Phase 3 (分潤): 基於「Gap-to-Skill」數據的課程推薦佣金。"
+                        ],
+                        glossary: [
+                            { term: "Freemium (免費增值)", def: "基本服務免費，進階功能收費的商業模式。" },
+                            { term: "LTV (終身價值)", def: "一名客戶在關係期間內貢獻的總預期營收。" },
+                            { term: "CAC (獲客成本)", def: "獲得一名付費客戶所需的成本。" }
+                        ],
+                        knowledge: "「飛輪效應」：學生多 -> 數據多 -> 配對準 -> 雇主多 -> 學生更多。Phase 3（教育分潤）是高利潤、零庫存的模式，將成為長尾營收來源。",
+                        cards: [
+                            { q: "學生端定價？", a: "NT$ 49-199 / 月" },
+                            { q: "中小企業定價？", a: "NT$ 1,000-3,000 / 月" },
+                            { q: "單體經濟效益？", a: "LTV/CAC > 4 倍" }
+                        ]
+                    },
+                    ask: {
+                        title: "IX. 投資需求 (The Ask)",
+                        subtitle: "募資計畫與資金分配。",
+                        intro: "我們正尋求 15 萬美元的資金，以支持未來 15-18 個月的營運。大部分資金 (40%) 將用於 AI 模型微調與數據管道建置，這是產品的核心競爭力。這筆資金將帶領我們達成 A 輪募資的準備條件。",
+                        highlights: [
+                            "輪次: Pre-Seed / Seed。",
+                            "金額: US$ 150K (上限 $300K)。",
+                            "跑道 (Runway): 15-18 個月。",
+                            "資金分配: 40% AI/數據, 35% 產品開發, 15% 市場推廣, 10% 法遵。"
+                        ],
+                        glossary: [
+                            { term: "Runway (跑道)", def: "新創公司在資金耗盡前能營運的時間。" },
+                            { term: "Pre-Seed", def: "最早期的種子前輪融資，通常用於打造 MVP。" },
+                            { term: "Burn Rate (燒錢率)", def: "新創公司每月消耗資金的速度。" }
+                        ],
+                        knowledge: "這是一個「資本效率高」的請求。利用大學資源將燒錢率控制在低點 (~$10-15k/月)。目標是利用這筆資金達到「A 輪前驗證 (Series A Pilot Validation)」。",
+                        cards: [
+                            { q: "募資金額？", a: "US$ 150K" },
+                            { q: "跑道長度？", a: "15-18 個月" },
+                            { q: "最大筆支出？", a: "40% AI 模型與數據" }
+                        ]
+                    },
+                    team: {
+                        title: "X. The Team",
+                        subtitle: "Cross-disciplinary Education & AI experts.",
+                        intro: "我們的團隊結合了學術權威與技術專長。駱世民教授帶來深厚的產業連結與通路優勢，Alex Yang 負責構建 AI 架構。加上專業顧問團的協助，我們擁有執行此願景的最佳組合。",
+                        highlights: [
+                            "CEO: Prof. Shihmin Lo - 學術與產業橋樑，制定願景。",
+                            "CTO: Alex Yang - AI 架構師，NLP/RAG 專家。",
+                            "CMO: Ben Wang - 負責成長、校園與 B2B 合作。",
+                            "顧問團: HR Tech 與法律合規專家。"
+                        ],
+                        glossary: [
+                            { term: "Co-founder (共同創辦人)", def: "與他人共同創立公司的人。" },
+                            { term: "NLP (自然語言處理)", def: "讓電腦理解人類語言的 AI 技術分支。" },
+                            { term: "RAG", def: "檢索增強生成。透過引用權威知識庫來優化大型語言模型輸出的技術。" }
+                        ],
+                        knowledge: "團隊組合非常理想：一位教授（信任/通路）、一位技術長（產品）、一位行銷長（成長）。「教授」身分是建立「教育夥伴關係」護城河的關鍵。",
+                        cards: [
+                            { q: "CEO 是誰？", a: "Prof. Shihmin Lo" },
+                            { q: "CTO 的專長？", a: "NLP 與 RAG 架構" },
+                            { q: "CEO 的獨特優勢？", a: "學術背景與校園通路" }
+                        ]
+                    },
+                    user_record: {
+                        title: "XI. 學習歷程紀錄",
+                        subtitle: "個人學習進度與成績",
+                        intro: "這是您的個人學習儀表板。回顧您在各個章節的測驗表現，並針對較弱的環節進行複習。持續學習是創業成功的關鍵。",
+                        highlights: [],
+                        glossary: [],
+                        knowledge: "Continuous learning is key. Use this record to spot weak points and revisit the material.",
+                        cards: []
+                    }
+                }
+            }
+        };
+
+        // --- Components ---
+
+        const SectionCard = ({ isActive, onClick, title, iconName, index }) => {
+            const IconComponent = Icons[iconName] || Icons.BookOpen;
+
+            return (
+                <button
+                    onClick={onClick}
+                    className={`w-full flex items-center p-4 transition-all duration-300 border-l-4 ${
+                        isActive
+                            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-600 dark:border-emerald-400 text-emerald-900 dark:text-emerald-100'
+                            : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400'
+                    }`}
+                >
+                    <div className={`mr-3 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
+                        <IconComponent size={20} />
+                    </div>
+                    <div className="text-left">
+                        <span className="text-xs font-serif text-gray-400 uppercase tracking-widest block mb-0.5">Section {String(index).padStart(2, '0')}</span>
+                        <span className={`font-medium ${isActive ? 'font-serif' : 'font-sans'}`}>{title}</span>
+                    </div>
+                    {isActive && <Icons.ChevronRight className="ml-auto text-emerald-600 dark:text-emerald-400" size={16} />}
+                </button>
+            );
+        };
+
+        const FlipCard = ({ question, answer }) => {
+            const [isFlipped, setIsFlipped] = useState(false);
+
+            return (
+                <div 
+                    className="group h-40 w-full perspective-1000 cursor-pointer"
+                    onClick={() => setIsFlipped(!isFlipped)}
+                >
+                    <div className={`relative h-full w-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+                        {/* Front */}
+                        <div className="absolute inset-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 flex flex-col items-center justify-center shadow-sm backface-hidden rounded-lg group-hover:shadow-md transition-shadow">
+                            <div className="text-emerald-600 dark:text-emerald-400 mb-2">
+                                <Icons.Lightbulb size={24} />
+                            </div>
+                            <p className="text-center font-serif text-gray-800 dark:text-gray-200 font-medium">{question}</p>
+                            <p className="mt-4 text-xs text-gray-400 uppercase tracking-wider">Click to Flip</p>
+                        </div>
+                        {/* Back */}
+                        <div className="absolute inset-0 bg-emerald-600 dark:bg-emerald-800 text-white p-6 flex flex-col items-center justify-center shadow-sm rotate-y-180 backface-hidden rounded-lg">
+                            <p className="text-center font-sans font-bold text-lg">{answer}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Quiz Component with Explanation ---
+        const QuizModule = ({ sectionId, lang, onComplete, initialScore }) => {
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [isCorrect, setIsCorrect] = useState(null); // null, true, false
+            const [score, setScore] = useState(0);
+            const [isFinished, setIsFinished] = useState(!!initialScore); 
+            const [questions, setQuestions] = useState([]);
+
+            useEffect(() => {
+                // Regenerate questions when section changes
+                const allQuizData = generateQuizData(lang);
+                if (allQuizData[sectionId]) {
+                    // Basic init
+                    setQuestions(allQuizData[sectionId]);
+                    setCurrentQIndex(0);
+                    setSelectedOption(null);
+                    setIsCorrect(null);
+                    setScore(0);
+                    setIsFinished(false);
+                }
+            }, [sectionId, lang]);
+
+            const handleOptionClick = (optionIndex) => {
+                if (isCorrect !== null) return; // Prevent changing answer
+                setSelectedOption(optionIndex);
+                const correct = optionIndex === questions[currentQIndex].ans;
+                setIsCorrect(correct);
+                if (correct) {
+                    setScore(s => s + 1);
+                }
+            };
+
+            const handleNext = () => {
+                if (currentQIndex < questions.length - 1) {
+                    setCurrentQIndex(currentQIndex + 1);
+                    setSelectedOption(null);
+                    setIsCorrect(null);
+                } else {
+                    setIsFinished(true);
+                    onComplete(score + (isCorrect ? 0 : 0)); // update parent record
+                }
+            };
+
+            const handleRetry = () => {
+                // Regenerate & Shuffle
+                const allQuizData = generateQuizData(lang);
+                if (allQuizData[sectionId]) {
+                    const freshQuestions = allQuizData[sectionId].map(q => ({
+                        ...q,
+                        options: [...q.options]
+                    }));
+                    setQuestions(freshQuestions);
+                }
+                setCurrentQIndex(0);
+                setSelectedOption(null);
+                setIsCorrect(null);
+                setScore(0);
+                setIsFinished(false);
+            };
+
+            if (!questions || questions.length === 0) return null;
+
+            if (isFinished) {
+                return (
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm mt-8 text-center animate-fade-in-up">
+                        <div className="bg-emerald-100 dark:bg-emerald-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Icons.Award className="text-emerald-600 dark:text-emerald-400" size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                            {lang === 'en' ? 'Quiz Completed!' : '測驗完成！'}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300 mb-6">
+                            {lang === 'en' ? 'Your Score:' : '您的得分：'} <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{score} / {questions.length}</span>
+                        </p>
+                        <button 
+                            onClick={handleRetry}
+                            className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex items-center mx-auto"
+                        >
+                            <Icons.RefreshCw size={18} className="mr-2" />
+                            {lang === 'en' ? 'Retake Quiz' : '再試一次'}
+                        </button>
+                    </div>
+                );
+            }
+
+            const currentQ = questions[currentQIndex];
+
+            return (
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm mt-8 animate-fade-in-up">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+                            <Icons.Target className="mr-2 text-emerald-600" size={20} />
+                            {lang === 'en' ? 'Mini Quiz' : '牛刀小試'}
+                        </h3>
+                        <span className="text-xs font-medium text-gray-400">
+                            Q {currentQIndex + 1} / {questions.length}
+                        </span>
+                    </div>
+                    
+                    <p className="text-gray-700 dark:text-gray-200 font-medium mb-6 text-lg">
+                        {currentQ.q}
+                    </p>
+
+                    <div className="space-y-3">
+                        {currentQ.options.map((opt, idx) => {
+                            let btnClass = "w-full text-left p-3 rounded-lg border-2 transition-all duration-200 ";
+                            
+                            if (selectedOption === null) {
+                                btnClass += "border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20";
+                            } else {
+                                if (idx === currentQ.ans) {
+                                    btnClass += "border-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200"; // Correct
+                                } else if (idx === selectedOption) {
+                                    btnClass += "border-red-400 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200"; // Wrong selected
+                                } else {
+                                    btnClass += "border-gray-200 dark:border-gray-700 opacity-50"; // Others
+                                }
+                            }
+
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleOptionClick(idx)}
+                                    disabled={selectedOption !== null}
+                                    className={btnClass}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span>{opt}</span>
+                                        {selectedOption !== null && idx === currentQ.ans && <Icons.CheckCircle2 size={18} className="text-emerald-600" />}
+                                        {selectedOption !== null && idx === selectedOption && idx !== currentQ.ans && <Icons.AlertCircle size={18} className="text-red-500" />}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* FEEDBACK SECTION */}
+                    {selectedOption !== null && (
+                        <div className={`mt-4 p-4 rounded-lg border ${isCorrect ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'}`}>
+                            <div className="flex items-start gap-3">
+                                {isCorrect ? <Icons.CheckCircle2 className="text-emerald-600 flex-shrink-0" size={20} /> : <Icons.Info className="text-red-600 flex-shrink-0" size={20} />}
+                                <div>
+                                    <p className={`font-bold mb-1 ${isCorrect ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'}`}>
+                                        {isCorrect ? (lang === 'en' ? 'Correct!' : '答對了！') : (lang === 'en' ? 'Incorrect.' : '答錯了。')}
+                                    </p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                        {currentQ.explanation}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedOption !== null && (
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={handleNext}
+                                className="flex items-center bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                            >
+                                {currentQIndex < questions.length - 1 ? (lang === 'en' ? 'Next Question' : '下一題') : (lang === 'en' ? 'See Results' : '查看結果')}
+                                <Icons.ChevronRight size={16} className="ml-1" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- Welcome Screen Component ---
+        const WelcomeScreen = ({ onStart, lang }) => {
+            const [inputName, setInputName] = useState('');
+            const [currentTime, setCurrentTime] = useState(new Date());
+
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (inputName.trim()) {
+                    onStart(inputName);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 z-[60] flex flex-col items-center justify-center p-6 text-center animate-fade-in-up">
+                    <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
+                        <div className="mb-8">
+                            <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600 dark:text-emerald-400">
+                                <Icons.Rocket size={40} />
+                            </div>
+                            <h1 className="text-3xl font-serif font-bold text-gray-900 dark:text-white mb-2">
+                                Welcome to JIT
+                            </h1>
+                            <p className="text-gray-500 dark:text-gray-400">
+                                {lang === 'en' ? 'Interactive Investor Pitch Learning Hub' : '互動式投資簡報學習中心'}
+                            </p>
+                        </div>
+
+                        <div className="mb-8 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            <div className="flex items-center justify-center text-gray-500 dark:text-gray-400 mb-1 space-x-2">
+                                <Icons.Clock size={16} />
+                                <span className="text-sm font-medium">
+                                    {currentTime.toLocaleDateString()}
+                                </span>
+                            </div>
+                            <div className="text-3xl font-mono font-bold text-emerald-600 dark:text-emerald-400 tracking-wider">
+                                {/* 24-Hour Format */}
+                                {currentTime.toLocaleTimeString([], {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'})}
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="text-left">
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
+                                    {lang === 'en' ? 'Enter Your Name' : '請輸入您的姓名'}
+                                </label>
+                                <div className="relative">
+                                    <Icons.User className="absolute left-3 top-3 text-gray-400" size={20} />
+                                    <input 
+                                        type="text"
+                                        value={inputName}
+                                        onChange={(e) => setInputName(e.target.value)}
+                                        placeholder={lang === 'en' ? 'e.g. Alice Chen' : '例如：陳小明'}
+                                        className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white transition-all"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <button 
+                                type="submit"
+                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                            >
+                                {lang === 'en' ? 'Start Learning Journey' : '開始學習旅程'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const JITLearningHub = () => {
+            const [activeSection, setActiveSection] = useState('executive_summary');
+            const [lang, setLang] = useState('zh');
+            const [darkMode, setDarkMode] = useState(false);
+            const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+            
+            // User State
+            const [userName, setUserName] = useState('');
+            const [loginTime, setLoginTime] = useState(null);
+            const [userScores, setUserScores] = useState({});
+
+            useEffect(() => {
+                if (darkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, [darkMode]);
+
+            useEffect(() => {
+                const handleResize = () => {
+                    if (window.innerWidth < 1024) {
+                        setIsSidebarOpen(false);
+                    } else {
+                        setIsSidebarOpen(true);
+                    }
+                };
+                window.addEventListener('resize', handleResize);
+                handleResize(); 
+                return () => window.removeEventListener('resize', handleResize);
+            }, []);
+
+            const handleStart = (name) => {
+                setUserName(name);
+                setLoginTime(new Date());
+            };
+
+            const handleQuizComplete = (sectionId, score) => {
+                setUserScores(prev => ({
+                    ...prev,
+                    [sectionId]: score
+                }));
+            };
+
+            const currentContent = contentData[lang].content[activeSection];
+            const sections = contentData[lang].sections;
+            const activeIndex = sections.findIndex(s => s.id === activeSection);
+            const isQuizAvailable = activeSection !== 'user_record' && generateQuizData(lang)[activeSection];
+
+            if (!userName) {
+                return <WelcomeScreen onStart={handleStart} lang={lang} />;
+            }
+
+            return (
+                <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'} font-sans`}>
+                    
+                    {/* Top Navigation Bar */}
+                    <header className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-50 flex items-center justify-between px-4 lg:px-8 shadow-sm">
+                        <div className="flex items-center">
+                            <button 
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className="p-2 mr-4 lg:hidden rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                            >
+                                <Icons.Menu size={20} />
+                            </button>
+                            
+                            {/* JIT Logo - Returns to Home */}
+                            <button 
+                                onClick={() => setActiveSection('executive_summary')}
+                                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                                title="Back to Executive Summary"
+                            >
+                                <div className="bg-emerald-600 text-white p-1.5 rounded font-serif font-bold text-xl tracking-tight">JIT</div>
+                                <div className="flex flex-col text-left">
+                                    <h1 className="font-serif text-lg font-bold tracking-tight text-gray-800 dark:text-gray-100 leading-none">
+                                        Jobs in Time
+                                    </h1>
+                                    <span className="hidden sm:block text-xs text-emerald-600 dark:text-emerald-400 font-medium tracking-wide mt-0.5">
+                                        The Right Job at the Right Time.
+                                    </span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            {/* Instructor & Links */}
+                            <div className="hidden lg:flex items-center gap-3 border-r border-gray-200 dark:border-gray-700 pr-4">
+                                <div className="text-right">
+                                    <a 
+                                        href={PROF_LINK} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-sm font-bold text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-end group transition-colors"
+                                    >
+                                        Prof. Shihmin Lo
+                                        <Icons.ExternalLink size={12} className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </a>
+                                    <span className="text-xs text-gray-500 block">NCNU</span>
+                                </div>
+                                <a 
+                                    href={YT_LINK} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full transition-colors shadow-sm"
+                                    title="YouTube Channel"
+                                >
+                                    <Icons.Youtube size={16} />
+                                </a>
+                            </div>
+
+                            <button 
+                                onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                <Icons.Languages size={16} />
+                                {lang === 'en' ? '中文' : 'English'}
+                            </button>
+                            <button 
+                                onClick={() => setDarkMode(!darkMode)}
+                                className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                {darkMode ? <Icons.Sun size={20} /> : <Icons.Moon size={20} />}
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Main Layout */}
+                    <div className="pt-16 flex h-screen overflow-hidden">
+                        
+                        {/* Sidebar Navigation */}
+                        <aside 
+                            className={`
+                                fixed lg:static inset-y-0 left-0 z-40 w-72 h-full transform transition-transform duration-300 ease-in-out
+                                bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col shadow-lg lg:shadow-none
+                                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-72'}
+                            `}
+                        >
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-800">
+                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">
+                                    {lang === 'en' ? 'Table of Contents' : '目錄導覽'}
+                                </p>
+                                <h2 className="font-serif text-lg font-bold text-gray-900 dark:text-gray-100">
+                                    JIT Pitch Deck
+                                </h2>
+                            </div>
+                            
+                            <div className="overflow-y-auto flex-1 py-4 space-y-1">
+                                {sections.map((section, index) => (
+                                    <SectionCard 
+                                        key={section.id}
+                                        isActive={activeSection === section.id}
+                                        onClick={() => {
+                                            setActiveSection(section.id);
+                                            if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                                        }}
+                                        title={section.title}
+                                        iconName={section.icon}
+                                        index={index}
+                                    />
+                                ))}
+                            </div>
+
+                            <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+                                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg flex items-center justify-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center font-medium">
+                                        {lang === 'en' ? 'Learning in progress' : '學習進行中'}
+                                    </p>
+                                </div>
+                            </div>
+                        </aside>
+
+                        {isSidebarOpen && (
+                            <div 
+                                className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm"
+                                onClick={() => setIsSidebarOpen(false)}
+                            />
+                        )}
+
+                        {/* Content Area */}
+                        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950 p-4 lg:p-10 scroll-smooth w-full">
+                            <div className="max-w-5xl mx-auto space-y-8 pb-20">
+                                
+                                {/* Header Section */}
+                                <div className="animate-fade-in-up">
+                                    <div className="flex items-center gap-2 mb-2 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-widest text-xs">
+                                        <span>Section {String(activeIndex).padStart(2, '0')}</span>
+                                        <span className="w-12 h-px bg-emerald-600 dark:bg-emerald-400"></span>
+                                    </div>
+                                    
+                                    <h1 className="font-serif text-3xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-3 leading-tight">
+                                        {currentContent.title}
+                                    </h1>
+                                    
+                                    <p className="text-lg lg:text-xl text-gray-600 dark:text-gray-300 font-light border-l-4 border-emerald-500 pl-4 py-1 italic mb-6">
+                                        "{currentContent.subtitle}"
+                                    </p>
+
+                                    {/* Special Executive Summary Dashboard Layout */}
+                                    {activeSection === 'executive_summary' && (
+                                        <div className="space-y-8 animate-fade-in-up delay-100">
+                                            {/* Pitch Summary Box */}
+                                            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <Icons.LayoutDashboard className="text-emerald-600" size={24} />
+                                                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                                                        {lang === 'en' ? 'Pitch Overview' : '創業計畫核心摘要'}
+                                                    </h2>
+                                                </div>
+                                                <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg mb-4">
+                                                    {currentContent.intro}
+                                                </p>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                                                    {currentContent.highlights.map((h, i) => (
+                                                        <div key={i} className="flex gap-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                                                            <Icons.CheckCircle2 className="text-emerald-500 flex-shrink-0 mt-1" size={18} />
+                                                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{h}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Quick Nav Grid */}
+                                            <div>
+                                                <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">
+                                                    {lang === 'en' ? 'Quick Navigation' : '快速導覽'}
+                                                </h3>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                                    {sections.slice(1, -1).map((s, idx) => (
+                                                        <button 
+                                                            key={s.id}
+                                                            onClick={() => setActiveSection(s.id)}
+                                                            className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-emerald-500 hover:shadow-md transition-all text-left group"
+                                                        >
+                                                            <span className="text-xs text-gray-400 font-serif block mb-1">Part {idx + 1}</span>
+                                                            <span className="font-bold text-gray-800 dark:text-gray-200 group-hover:text-emerald-600 transition-colors">
+                                                                {s.title.split('. ')[1]}
+                                                            </span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Main Content (Hidden for Exec Summary as it has special layout) */}
+                                {activeSection !== 'executive_summary' && activeSection !== 'user_record' && (
+                                    <div className="animate-fade-in-up">
+                                        {/* Introduction Block */}
+                                        <div className="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-xl border-l-4 border-emerald-500 mb-8">
+                                            <h3 className="flex items-center text-lg font-bold text-emerald-800 dark:text-emerald-300 mb-2">
+                                                <Icons.BookOpen size={20} className="mr-2" />
+                                                {lang === 'en' ? 'Chapter Introduction' : '章節導讀'}
+                                            </h3>
+                                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+                                                {currentContent.intro}
+                                            </p>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                            <div className="lg:col-span-2 space-y-8">
+                                                <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-8">
+                                                    <h3 className="flex items-center text-lg font-bold text-gray-900 dark:text-white mb-6">
+                                                        <Icons.Target className="mr-2 text-emerald-600" size={20} />
+                                                        {lang === 'en' ? 'Key Highlights' : '核心重點'}
+                                                    </h3>
+                                                    <ul className="space-y-4">
+                                                        {currentContent.highlights.map((highlight, i) => (
+                                                            <li key={i} className="flex items-start group">
+                                                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold mt-0.5 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                                                    {i + 1}
+                                                                </span>
+                                                                <span className="ml-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                                    {highlight}
+                                                                </span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+
+                                                    {/* Knowledge Base Block */}
+                                                    <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
+                                                        <h4 className="flex items-center text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                                                            <Icons.Lightbulb className="mr-2" size={16} />
+                                                            {lang === 'en' ? 'Consultant\'s Note' : '顧問觀點 (Insight)'}
+                                                        </h4>
+                                                        <div className="bg-gray-50 dark:bg-gray-800 p-5 rounded-lg text-sm text-gray-600 dark:text-gray-300 leading-relaxed border-l-2 border-gray-300 dark:border-gray-600">
+                                                            {currentContent.knowledge}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* QUIZ MODULE */}
+                                                {isQuizAvailable && (
+                                                    <QuizModule 
+                                                        sectionId={activeSection} 
+                                                        lang={lang} 
+                                                        onComplete={(score) => handleQuizComplete(activeSection, score)}
+                                                        initialScore={userScores[activeSection]}
+                                                    />
+                                                )}
+                                            </div>
+
+                                            {/* Right Column: Cards & Glossary */}
+                                            <div className="space-y-6">
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">
+                                                        {lang === 'en' ? 'Flashcards' : '學習卡'}
+                                                    </h3>
+                                                </div>
+                                                {currentContent.cards.map((card, i) => (
+                                                    <FlipCard key={i} question={card.q} answer={card.a} />
+                                                ))}
+                                                
+                                                <div className="bg-emerald-900 text-white rounded-xl overflow-hidden shadow-lg mt-6">
+                                                    <div className="p-4 border-b border-emerald-800 bg-emerald-950/50">
+                                                        <h3 className="flex items-center text-base font-serif font-bold">
+                                                            <Icons.BookOpen className="mr-2 text-emerald-400" size={18} />
+                                                            {lang === 'en' ? 'Glossary' : '術語表'}
+                                                        </h3>
+                                                    </div>
+                                                    <div className="p-4 space-y-4">
+                                                        {currentContent.glossary.map((item, i) => (
+                                                            <div key={i} className="space-y-1">
+                                                                <p className="font-bold text-emerald-300 text-sm border-b border-emerald-800/50 pb-1 mb-1 inline-block">
+                                                                    {item.term}
+                                                                </p>
+                                                                <p className="text-xs text-emerald-100/80 leading-relaxed">
+                                                                    {item.def}
+                                                                </p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* User Record Section */}
+                                {activeSection === 'user_record' && (
+                                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-8 animate-fade-in-up">
+                                        <div className="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-gray-800 pb-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-2xl font-bold font-serif">
+                                                    {userName.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{userName}</h2>
+                                                    <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                                                        <Icons.Clock size={14} />
+                                                        {lang === 'en' ? 'Started at: ' : '開始學習時間：'} 
+                                                        {loginTime?.toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Score Table Code (Same as previous, just ensuring context) */}
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
+                                                    <tr>
+                                                        <th className="px-6 py-3 rounded-l-lg">{lang === 'en' ? 'Section' : '章節'}</th>
+                                                        <th className="px-6 py-3">{lang === 'en' ? 'Score' : '得分'}</th>
+                                                        <th className="px-6 py-3 rounded-r-lg">{lang === 'en' ? 'Status' : '狀態'}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {sections.filter(s => s.id !== 'user_record' && s.id !== 'executive_summary').map((s) => {
+                                                        const score = userScores[s.id];
+                                                        const hasScore = score !== undefined;
+                                                        const quizLen = generateQuizData(lang)[s.id]?.length || 3;
+                                                        
+                                                        return (
+                                                            <tr key={s.id} className="bg-white dark:bg-gray-900 border-b dark:border-gray-800">
+                                                                <td className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                                                                    {s.title}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    {hasScore ? (
+                                                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{score} / {quizLen}</span>
+                                                                    ) : (
+                                                                        <span className="text-gray-400">-</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    {hasScore ? (
+                                                                        <span className="bg-emerald-100 text-emerald-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-emerald-900 dark:text-emerald-300">
+                                                                            {lang === 'en' ? 'Completed' : '已完成'}
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
+                                                                            {lang === 'en' ? 'Pending' : '未完成'}
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Navigation Footer */}
+                                <div className="flex justify-between pt-8 border-t border-gray-200 dark:border-gray-800">
+                                    <button
+                                        onClick={() => setActiveSection(sections[activeIndex - 1].id)}
+                                        disabled={activeIndex === 0}
+                                        className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                            activeIndex === 0 
+                                            ? 'text-gray-300 cursor-not-allowed' 
+                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                                        }`}
+                                    >
+                                        Prev Section
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveSection(sections[activeIndex + 1].id)}
+                                        disabled={activeIndex === sections.length - 1}
+                                        className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                            activeIndex === sections.length - 1
+                                            ? 'text-gray-300 cursor-not-allowed'
+                                            : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg'
+                                        }`}
+                                    >
+                                        Next: {sections[activeIndex + 1]?.title.split('.')[1] || sections[activeIndex + 1]?.title} <Icons.ArrowRight size={16} className="ml-1" />
+                                    </button>
+                                </div>
+
+                            </div>
+                        </main>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<JITLearningHub />);
+    </script>
+</body>
+</html>
