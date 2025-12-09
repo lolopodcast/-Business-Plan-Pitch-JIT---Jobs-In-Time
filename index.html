@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JIT - Jobs in Time | Investor Pitch Learning Hub</title>
     
-    <!-- React & ReactDOM -->
+    <!-- React & ReactDOM (UMD) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
     <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
+    <!-- Firebase SDK (Compat version for simple HTML usage) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -21,31 +25,20 @@
                 extend: {
                     colors: {
                         emerald: {
-                            50: '#ecfdf5',
-                            100: '#d1fae5',
-                            200: '#a7f3d0',
-                            300: '#6ee7b7',
-                            400: '#34d399',
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857',
-                            800: '#065f46',
-                            900: '#064e3b',
-                            950: '#022c22',
+                            50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7',
+                            400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857',
+                            800: '#065f46', 900: '#064e3b', 950: '#022c22',
                         }
                     },
                     fontFamily: {
-                        sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', "Segoe UI", 'Roboto', "Helvetica Neue", 'Arial', "Noto Sans", "TC", "PingFang TC", "Microsoft JhengHei", 'sans-serif'],
-                        serif: ['ui-serif', 'Georgia', 'Cambria', "Times New Roman", 'Times', 'serif'],
+                        sans: ['"Noto Sans TC"', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', "Segoe UI", 'Roboto', "Helvetica Neue", 'Arial', 'sans-serif'],
+                        serif: ['"Noto Serif TC"', 'ui-serif', 'Georgia', 'Cambria', "Times New Roman", 'Times', 'serif'],
                         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
                     }
                 }
             }
         }
     </script>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         .perspective-1000 { perspective: 1000px; }
@@ -58,7 +51,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
-        .delay-100 { animation-delay: 0.1s; }
         
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -71,31 +63,53 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // Lucide Icons Component Wrapper
-        const Icon = ({ name, size = 24, className }) => {
-            const LucideIcons = window.lucide.icons;
-            const IconComponent = LucideIcons[name];
-            
-            if (!IconComponent) {
-                return null;
+        const { useState, useEffect } = React;
+
+        // =========================================================================
+        //  TODO: Firebase 設定區塊 (請將您的設定貼在下方)
+        //  請從 Firebase Console -> Project Settings -> General -> Your apps 複製
+        // =========================================================================
+       const firebaseConfig = {
+
+  apiKey: "AIzaSyDCQJuaOFBNAkyXSb6_r2EdFm_BI1EzcHg",
+
+  authDomain: "sml-1209.firebaseapp.com",
+
+  projectId: "sml-1209",
+
+  storageBucket: "sml-1209.firebasestorage.app",
+
+  messagingSenderId: "46020799064",
+
+  appId: "1:46020799064:web:7b67ca910ed32a69d3b82d",
+
+  measurementId: "G-4SGFHEE3KP"
+
+};
+
+        // =========================================================================
+
+        // Initialize Firebase safely
+        let auth = null;
+        try {
+            if (window.firebase) {
+                // Ensure we only initialize once
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                // Check if config is actually set (not the placeholder)
+                if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
+                    auth = firebase.auth();
+                    console.log("Firebase initialized successfully");
+                } else {
+                    console.warn("Firebase config is strictly placeholder. Auth disabled.");
+                }
             }
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+        }
 
-            // Convert size to string just in case
-            const sizeStr = size.toString();
-
-            // We need to render the SVG manually because we are not using the React wrapper library directly
-            // But wait, lucide-react IS NOT available as a UMD build easily.
-            // WORKAROUND: We will use a simple mapping since we can't easily import lucide-react in browser directly without build step
-            // OR use standard SVG icons.
-            // BETTER APPROACH for standalone HTML: Create simple SVG components mapping for used icons.
-            
-            return <i data-lucide={name} className={className} width={size} height={size}></i>;
-        };
-
-        // Since we can't easily use lucide-react in standalone HTML without a bundler,
-        // we will create React components for the icons we need using raw SVG paths.
-        // This ensures stability and no external dependency failures.
-        
+        // --- Icon Components (Raw SVG) ---
         const Icons = {
             LayoutDashboard: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>,
             AlertCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>,
@@ -131,10 +145,10 @@
             Youtube: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>,
             ExternalLink: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>,
             RefreshCw: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>,
-            Info: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            Info: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
+            Google: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.013-1.133 8.053-3.227 2.107-2.067 2.72-5.027 2.72-7.44 0-.667-.053-1.32-.16-1.92h-10.613z"/></svg>,
+            LogOut: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
         };
-
-        const { useState, useEffect } = React;
 
         // --- Links ---
         const PROF_LINK = "https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo";
@@ -555,29 +569,29 @@
                     team: {
                         title: "X. The Team",
                         subtitle: "Cross-disciplinary Education & AI experts.",
-                        intro: "Our team combines academic credibility with technical expertise. Prof. Shihmin Lo brings deep industry connections and channel access. Alex Yang leads our AI architecture. Together with our advisors, we have the right mix to execute this vision.",
+                        intro: "我們的團隊結合了學術權威與技術專長。駱世民教授帶來深厚的產業連結與通路優勢，Alex Yang 負責構建 AI 架構。加上專業顧問團的協助，我們擁有執行此願景的最佳組合。",
                         highlights: [
-                            "CEO: Prof. Shihmin Lo - Academic/Industry bridge, Vision.",
-                            "CTO: Alex Yang - AI Architect, NLP/RAG expert.",
-                            "CMO: Ben Wang - Growth, Campus & B2B partnerships.",
-                            "Advisors: HR Tech & Legal Compliance experts."
+                            "CEO: Prof. Shihmin Lo - 學術與產業橋樑，制定願景。",
+                            "CTO: Alex Yang - AI 架構師，NLP/RAG 專家。",
+                            "CMO: Ben Wang - 負責成長、校園與 B2B 合作。",
+                            "顧問團: HR Tech 與法律合規專家。"
                         ],
                         glossary: [
-                            { term: "Co-founder", def: "A person who, in conjunction with others, is instrumental in starting a business." },
-                            { term: "NLP", def: "Natural Language Processing. A branch of AI helping computers understand human language." },
-                            { term: "RAG", def: "Retrieval-Augmented Generation. Optimizing LLM output by referencing an authoritative knowledge base." }
+                            { term: "Co-founder (共同創辦人)", def: "與他人共同創立公司的人。" },
+                            { term: "NLP (自然語言處理)", def: "讓電腦理解人類語言的 AI 技術分支。" },
+                            { term: "RAG", def: "檢索增強生成。透過引用權威知識庫來優化大型語言模型輸出的技術。" }
                         ],
-                        knowledge: "The team mix is ideal: A Professor (Trust/Channel), a Tech Lead (Product), and a Marketer (Growth). The 'Professor' element is key for the 'Education Partnerships' moat.",
+                        knowledge: "團隊組合非常理想：一位教授（信任/通路）、一位技術長（產品）、一位行銷長（成長）。「教授」身分是建立「教育夥伴關係」護城河的關鍵。",
                         cards: [
-                            { q: "Who is the CEO?", a: "Prof. Shihmin Lo" },
-                            { q: "CTO's Expertise?", a: "NLP & RAG Architecture" },
-                            { q: "CEO's unique advantage?", a: "Academic & Campus Access" }
+                            { q: "CEO 是誰？", a: "Prof. Shihmin Lo" },
+                            { q: "CTO 的專長？", a: "NLP 與 RAG 架構" },
+                            { q: "CEO 的獨特優勢？", a: "學術背景與校園通路" }
                         ]
                     },
                     user_record: {
-                        title: "XI. User Record",
-                        subtitle: "Your Progress & Performance",
-                        intro: "Review your learning journey. This dashboard tracks your quiz scores across all sections, helping you identify areas for review.",
+                        title: "XI. 學習歷程紀錄",
+                        subtitle: "個人學習進度與成績",
+                        intro: "這是您的個人學習儀表板。回顧您在各個章節的測驗表現，並針對較弱的環節進行複習。持續學習是創業成功的關鍵。",
                         highlights: [],
                         glossary: [],
                         knowledge: "Continuous learning is key. Use this record to spot weak points and revisit the material.",
@@ -1084,6 +1098,19 @@
                 return () => clearInterval(timer);
             }, []);
 
+            // --- Auth Handlers ---
+            const handleGoogleLogin = () => {
+                if (auth) {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    auth.signInWithPopup(provider).catch((error) => {
+                        console.error("Google Sign-in error:", error);
+                        alert("登入失敗，請稍後再試 (或檢查 Firebase Config)");
+                    });
+                } else {
+                    alert("Firebase 尚未正確設定，請手動輸入姓名進入。");
+                }
+            };
+
             const handleSubmit = (e) => {
                 e.preventDefault();
                 if (inputName.trim()) {
@@ -1119,10 +1146,26 @@
                             </div>
                         </div>
 
+                        {/* Google Login Button */}
+                        <div className="mb-6">
+                            <button
+                                onClick={handleGoogleLogin}
+                                className="w-full bg-white border border-gray-300 dark:bg-gray-700 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-white font-bold py-3 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-3"
+                            >
+                                <Icons.Google className="w-5 h-5" />
+                                {lang === 'en' ? 'Sign in with Google' : '使用 Google 帳號登入'}
+                            </button>
+                            <div className="mt-4 flex items-center justify-between">
+                                <span className="border-b w-1/5 border-gray-300 dark:border-gray-600"></span>
+                                <span className="text-xs text-gray-400 uppercase">OR</span>
+                                <span className="border-b w-1/5 border-gray-300 dark:border-gray-600"></span>
+                            </div>
+                        </div>
+
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="text-left">
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
-                                    {lang === 'en' ? 'Enter Your Name' : '請輸入您的姓名'}
+                                    {lang === 'en' ? 'Enter Your Name Manually' : '手動輸入姓名'}
                                 </label>
                                 <div className="relative">
                                     <Icons.User className="absolute left-3 top-3 text-gray-400" size={20} />
@@ -1132,7 +1175,7 @@
                                         onChange={(e) => setInputName(e.target.value)}
                                         placeholder={lang === 'en' ? 'e.g. Alice Chen' : '例如：陳小明'}
                                         className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white transition-all"
-                                        required
+                                        // Not required if Google login works, but good to have fallback
                                     />
                                 </div>
                             </div>
@@ -1140,7 +1183,7 @@
                                 type="submit"
                                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
                             >
-                                {lang === 'en' ? 'Start Learning Journey' : '開始學習旅程'}
+                                {lang === 'en' ? 'Start as Guest' : '以訪客身份開始'}
                             </button>
                         </form>
                     </div>
@@ -1155,7 +1198,9 @@
             const [isSidebarOpen, setIsSidebarOpen] = useState(true);
             
             // User State
+            const [user, setUser] = useState(null); // Firebase User Object
             const [userName, setUserName] = useState('');
+            const [userPhoto, setUserPhoto] = useState(null);
             const [loginTime, setLoginTime] = useState(null);
             const [userScores, setUserScores] = useState({});
 
@@ -1166,6 +1211,26 @@
                     document.documentElement.classList.remove('dark');
                 }
             }, [darkMode]);
+
+            // --- Auth Listener ---
+            useEffect(() => {
+                if (auth) {
+                    const unsubscribe = auth.onAuthStateChanged((u) => {
+                        if (u) {
+                            setUser(u);
+                            setUserName(u.displayName || u.email);
+                            setUserPhoto(u.photoURL);
+                            setLoginTime(new Date()); // Reset login time on fresh auth
+                        } else {
+                            // User logged out
+                            setUser(null);
+                            setUserName('');
+                            setUserPhoto(null);
+                        }
+                    });
+                    return () => unsubscribe();
+                }
+            }, []);
 
             useEffect(() => {
                 const handleResize = () => {
@@ -1183,6 +1248,14 @@
             const handleStart = (name) => {
                 setUserName(name);
                 setLoginTime(new Date());
+            };
+
+            const handleLogout = () => {
+                if (auth) {
+                    auth.signOut();
+                }
+                setUserName('');
+                setUser(null);
             };
 
             const handleQuizComplete = (sectionId, score) => {
@@ -1258,9 +1331,26 @@
                                 </a>
                             </div>
 
+                            {/* User Profile / Logout */}
+                            {userPhoto ? (
+                                <img src={userPhoto} alt="User" className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600" />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-800 flex items-center justify-center text-emerald-700 dark:text-emerald-200 font-bold text-sm">
+                                    {userName.charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                            
+                            <button 
+                                onClick={handleLogout}
+                                className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                                title="Sign Out"
+                            >
+                                <Icons.LogOut size={20} />
+                            </button>
+
                             <button 
                                 onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                             >
                                 <Icons.Languages size={16} />
                                 {lang === 'en' ? '中文' : 'English'}
@@ -1492,8 +1582,12 @@
                                     <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-8 animate-fade-in-up">
                                         <div className="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-gray-800 pb-6">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-2xl font-bold font-serif">
-                                                    {userName.charAt(0)}
+                                                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-2xl font-bold font-serif overflow-hidden">
+                                                    {userPhoto ? (
+                                                        <img src={userPhoto} alt={userName} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        userName.charAt(0)
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{userName}</h2>
