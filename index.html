@@ -511,7 +511,7 @@
                         intro: "Our revenue model evolves from B2C to B2B to Affiliate. We start with Freemium for students to build a user base (Phase 1), then sell efficiency tools to MSMEs (Phase 2), and finally monetize education recommendations via commissions (Phase 3).",
                         highlights: [
                             "Phase 1 (Students): Freemium + Tailoring Pack (NT$49-199/mo). High LTV/CAC > 4X.",
-                            "Phase 2 (MSME): Recruitment Subscription (NT$1-3k/mo). TAM NT$1B/mo.",
+                            "Phase 2 (MSME): Recruitment Subscription (NT$1-3k/mo). TAM NT$10億/mo.", // Keep currency part as is or adapt if strictly needed
                             "Phase 3 (Affiliate): Commission from courses based on 'Gap-to-Skill' data."
                         ],
                         glossary: [
@@ -551,23 +551,23 @@
                     team: {
                         title: "X. The Team",
                         subtitle: "Cross-disciplinary Education & AI experts.",
-                        intro: "我們的團隊結合了學術權威與技術專長。駱世民教授帶來深厚的產業連結與通路優勢，Alex Yang 負責構建 AI 架構。加上專業顧問團的協助，我們擁有執行此願景的最佳組合。",
+                        intro: "Our team combines academic authority with technical expertise. Prof. Shihmin Lo bridges industry connections, while Alex Yang architects the AI. Supported by expert advisors, we are the perfect mix to execute this vision.",
                         highlights: [
-                            "CEO: Prof. Shihmin Lo - 學術與產業橋樑，制定願景。",
-                            "CTO: Alex Yang - AI 架構師，NLP/RAG 專家。",
-                            "CMO: Ben Wang - 負責成長、校園與 B2B 合作。",
-                            "顧問團: HR Tech 與法律合規專家。"
+                            "CEO: Prof. Shihmin Lo - Bridge between Academia & Industry, Visionary.",
+                            "CTO: Alex Yang - AI Architect, NLP/RAG Expert.",
+                            "CMO: Ben Wang - Growth, Campus & B2B Partnerships.",
+                            "Advisors: HR Tech & Legal Compliance Experts."
                         ],
                         glossary: [
-                            { term: "Co-founder (共同創辦人)", def: "與他人共同創立公司的人。" },
-                            { term: "NLP (自然語言處理)", def: "讓電腦理解人類語言的 AI 技術分支。" },
-                            { term: "RAG", def: "檢索增強生成。透過引用權威知識庫來優化大型語言模型輸出的技術。" }
+                            { term: "Co-founder", def: "A person who establishes a company with others." },
+                            { term: "NLP", def: "Natural Language Processing. A field of AI giving computers the ability to understand text." },
+                            { term: "RAG", def: "Retrieval-Augmented Generation. Optimizing LLM output by referencing an authoritative knowledge base." }
                         ],
-                        knowledge: "團隊組合非常理想：一位教授（信任/通路）、一位技術長（產品）、一位行銷長（成長）。「教授」身分是建立「教育夥伴關係」護城河的關鍵。",
+                        knowledge: "The team composition is ideal: A Professor (Trust/Channel), a CTO (Product), and a CMO (Growth). The 'Professor' title is key to building the 'Education Partnership' moat.",
                         cards: [
-                            { q: "CEO 是誰？", a: "Prof. Shihmin Lo" },
-                            { q: "CTO 的專長？", a: "NLP 與 RAG 架構" },
-                            { q: "CEO 的獨特優勢？", a: "學術背景與校園通路" }
+                            { q: "Who is the CEO?", a: "Prof. Shihmin Lo" },
+                            { q: "CTO's expertise?", a: "NLP & RAG Architecture" },
+                            { q: "CEO's unique advantage?", a: "Academic background & Campus channels" }
                         ]
                     },
                     user_record: {
@@ -1072,6 +1072,7 @@
 
         const LoginPage = ({ onLogin, lang, setLang }) => {
             const [inputName, setInputName] = useState('');
+            const [inputEmail, setInputEmail] = useState('');
             const [currentTime, setCurrentTime] = useState(new Date());
 
             useEffect(() => {
@@ -1081,7 +1082,7 @@
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                if (inputName.trim()) onLogin(inputName);
+                if (inputName.trim()) onLogin(inputName, inputEmail);
             };
 
             const handleGoogleLogin = () => {
@@ -1105,7 +1106,10 @@
                             <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600 dark:text-emerald-400">
                                 <Icons.Rocket size={40} />
                             </div>
-                            <h1 className="text-3xl font-serif font-bold text-gray-900 dark:text-white mb-2">Welcome to JIT</h1>
+                            <h1 className="text-3xl font-serif font-bold text-gray-900 dark:text-white mb-1">Welcome to JIT</h1>
+                            <a href={LINKS.PROF} target="_blank" rel="noopener noreferrer" className="text-sm font-serif text-emerald-600 dark:text-emerald-400 font-bold mb-3 hover:underline inline-flex items-center">
+                                Prof. Shihmin Lo, PhD <Icons.ExternalLink size={12} className="ml-1"/>
+                            </a>
                             <p className="text-gray-500 dark:text-gray-400">{lang === 'en' ? 'Jobs in Time Learning Hub' : '互動式投資簡報學習中心'}</p>
                         </div>
 
@@ -1130,8 +1134,16 @@
                             <div className="relative">
                                 <Icons.User className="absolute left-3 top-3 text-gray-400" size={20} />
                                 <input 
-                                    type="text" value={inputName} onChange={(e) => setInputName(e.target.value)}
-                                    placeholder={lang === 'en' ? 'Enter Name (Guest)' : '輸入訪客姓名'}
+                                    type="text" required value={inputName} onChange={(e) => setInputName(e.target.value)}
+                                    placeholder={lang === 'en' ? 'Enter Name (Required)' : '輸入姓名 (必填)'}
+                                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white transition-all"
+                                />
+                            </div>
+                            <div className="relative">
+                                <Icons.Mail className="absolute left-3 top-3 text-gray-400" size={20} />
+                                <input 
+                                    type="email" value={inputEmail} onChange={(e) => setInputEmail(e.target.value)}
+                                    placeholder={lang === 'en' ? 'Enter Email (Optional)' : '輸入 Email (選填)'}
                                     className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white transition-all"
                                 />
                             </div>
@@ -1152,7 +1164,14 @@
                             <Icons.LogOut size={32} />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{lang === 'en' ? 'Logged Out' : '已登出'}</h2>
-                        <p className="text-gray-500 dark:text-gray-400 mb-8">{lang === 'en' ? 'Thank you for using JIT Learning Hub.' : '感謝您使用 JIT 學習中心。'}</p>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">{lang === 'en' ? 'Thank you for using JIT Learning Hub.' : '感謝您使用 JIT 學習中心。'}</p>
+                        
+                        <div className="mb-8">
+                             <a href={LINKS.PROF} target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-emerald-400 hover:underline font-serif font-bold inline-flex items-center">
+                                Prof. Shihmin Lo, PhD <Icons.ExternalLink size={14} className="ml-1"/>
+                             </a>
+                        </div>
+
                         <button onClick={onReLogin} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md transition-all">
                             {lang === 'en' ? 'Return to Login' : '重新登入'}
                         </button>
@@ -1181,7 +1200,8 @@
                     ...rows.map(r => r.map(c => `"${c}"`).join(","))
                 ].join("\n");
 
-                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                // Use UTF-8 BOM (\uFEFF) to support Chinese characters in Excel
+                const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.href = url;
@@ -1264,6 +1284,10 @@
             const [user, setUser] = useState(null);
             const [userScores, setUserScores] = useState({});
             
+            // Fixed Version Date (Development Date)
+            const versionDate = "2025-12-15";
+            const currentYear = new Date().getFullYear();
+
             // Auto Play State
             const [isPlaying, setIsPlaying] = useState(false);
             const [playInterval, setPlayInterval] = useState(15); // seconds
@@ -1329,8 +1353,8 @@
             }, [isPlaying, activeSection, playInterval, lang]);
 
             // Handlers
-            const handleLogin = (name) => {
-                setUser({ displayName: name, email: 'guest@jit.com' });
+            const handleLogin = (name, email) => {
+                setUser({ displayName: name, email: email || 'guest@jit.com' });
                 setViewState('main');
             };
             const handleLogout = () => {
@@ -1401,10 +1425,14 @@
                                     className="cursor-pointer flex items-center gap-3 group"
                                     onClick={() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
                                 >
-                                    <div className="bg-emerald-600 text-white p-1.5 rounded font-serif font-bold text-xl">JIT</div>
-                                    <div className="hidden sm:block">
-                                        <h1 className="font-serif text-lg font-bold text-gray-800 dark:text-gray-100 leading-none group-hover:text-emerald-600 transition-colors">Jobs in Time</h1>
-                                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium tracking-wide">The Right Job at the Right Time.</span>
+                                    <div className="bg-emerald-600 text-white p-1.5 rounded font-serif font-bold text-xl shadow-sm">JIT</div>
+                                    <div className="flex flex-col">
+                                        <h1 className="hidden min-[375px]:block font-serif text-sm sm:text-lg font-bold text-gray-800 dark:text-gray-100 leading-none group-hover:text-emerald-600 transition-colors">
+                                            Jobs in Time
+                                        </h1>
+                                        <span className="hidden sm:block text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium tracking-wide mt-0.5">
+                                            The Right Job at the Right Time.
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -1560,8 +1588,8 @@
                             {/* Footer (Right Side Links + Left Side Copyright) */}
                             <footer className="mt-12 py-8 border-t border-gray-200 dark:border-gray-800 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-gray-500 dark:text-gray-400">
                                 <div className="text-left order-2 md:order-1">
-                                    <p>Version: 2025-06-01</p>
-                                    <p>© 2025 Jobs in Time.</p>
+                                    <p>Version: {versionDate}</p>
+                                    <p>© {currentYear} Jobs in Time.</p>
                                 </div>
                                 <div className="flex items-center gap-6 order-1 md:order-2">
                                     <a href={LINKS.NCNU} target="_blank" className="hover:text-emerald-600 transition-colors">NCNU</a>
